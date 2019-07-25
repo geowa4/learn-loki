@@ -1,0 +1,39 @@
+---
+server:
+    http_listen_port: 9080
+    grpc_listen_port: 0
+
+positions:
+    filename: /promtail/positions.yaml
+
+clients:
+    - url: http://loki:3100/api/prom/push
+
+scrape_configs:
+    - job_name: osquery
+      static_configs:
+          - targets:
+                - localhost
+            labels:
+                job: osquery_results
+                __path__: /var/log/osquery/osqueryd.results.log
+      pipeline_stages:
+          - json:
+                expressions:
+                    timestamp: unixTime
+                    ip: columns.host
+                    name: name
+                    username: columns.username
+          - timestamp:
+                source: timestamp
+                format: Unix
+          - labels:
+                name: name
+          - metrics:
+                last_logins:
+                    type: Counter
+                    description: count last logins
+                    source: name
+                    config:
+                        value: pack_incident-response_last
+                        action: inc

@@ -1,0 +1,27 @@
+---
+version: "3.3"
+services:
+    loki:
+        image: grafana/loki
+        volumes:
+            - $HOME/loki:/loki
+            - $HOME/demo/loki.yml:/etc/loki/local-config.yaml
+        ports:
+            - "3100:3100"
+    promtail:
+        image: grafana/promtail
+        volumes:
+            - /var/log/osquery:/var/log/osquery
+            - $HOME/promtail:/promtail
+            - $HOME/demo/promtail.yml:/etc/promtail/local-config.yaml
+        command: ["-config.file=/etc/promtail/local-config.yaml"]
+        ports:
+            - "9080:9080"
+    grafana:
+        image: grafana/grafana
+        ports:
+            - "3000:3000"
+    prometheus:
+        image: prom/prometheus
+        ports:
+            - "9090:9090"
