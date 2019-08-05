@@ -18,5 +18,4 @@ Vagrant.configure("2") do |config|
   # end
   config.vm.provision "file", source: "./demo", destination: "$HOME/demo"
   config.vm.provision 'shell', path: './install.sh', privileged: true
-  config.vm.provision 'shell', path: './run.sh', privileged: false
 end

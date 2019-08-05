@@ -3,7 +3,7 @@
 ```bash
 vagrant up
 vagrant ssh
-cd demo
+cd /vagrant/demo
 docker-compose pull
 docker-compose up
 ```
