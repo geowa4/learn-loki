@@ -3,8 +3,6 @@ apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OSQUERY_KEY
 add-apt-repository 'deb [arch=amd64] https://pkg.osquery.io/deb deb main'
 apt-get update
 apt-get install -y osquery
-cp /usr/share/osquery/osquery.example.conf /etc/osquery/osquery.conf
-systemctl start osqueryd
 
 apt-get install -y jq docker.io docker-compose
 systemctl start docker

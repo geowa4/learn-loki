@@ -15,22 +15,22 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
   "links": [],
   "panels": [
     {
       "alert": {
+        "alertRuleTags": {},
         "conditions": [
           {
             "evaluator": {
-              "params": [0.01],
+              "params": [1],
               "type": "gt"
             },
             "operator": {
               "type": "and"
             },
             "query": {
-              "params": ["A", "5m", "now"]
+              "params": ["A", "1m", "now"]
             },
             "reducer": {
               "params": [],
@@ -40,8 +40,8 @@
           }
         ],
         "executionErrorState": "alerting",
-        "for": "5m",
-        "frequency": "1m",
+        "for": "5s",
+        "frequency": "10s",
         "handler": 1,
         "name": "Last logins alert",
         "noDataState": "no_data",
@@ -53,6 +53,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -73,7 +74,9 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
-      "options": {},
+      "options": {
+        "dataLinks": []
+      },
       "percentage": false,
       "pointradius": 2,
       "points": false,
@@ -84,7 +87,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(promtail_custom_last_logins{name=\"pack_incident-response_last\"}[30s])",
+          "expr": "increase(promtail_custom_last_logins{name=\"pack_incident-response_last\"}[5m])",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -96,7 +99,7 @@
           "fill": true,
           "line": true,
           "op": "gt",
-          "value": 0.1
+          "value": 1
         }
       ],
       "timeFrom": null,
@@ -142,14 +145,14 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 18,
+  "schemaVersion": 19,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {

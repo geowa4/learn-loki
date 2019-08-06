@@ -27,10 +27,10 @@ schema_config:
 
 storage_config:
     boltdb:
-        directory: /home/vagrant/loki/index
+        directory: /loki/index
 
     filesystem:
-        directory: /home/vagrant/loki/chunks
+        directory: /loki/chunks
 
 limits_config:
     enforce_metric_name: false
