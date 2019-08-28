@@ -1,46 +1,46 @@
 ---
 version: "3.3"
 networks:
-    loki:
+  loki:
 volumes:
-    loki:
-    promtail:
+  loki:
+  promtail:
 services:
-    loki:
-        image: grafana/loki:v0.2.0
-        volumes:
-            - loki:/loki
-            - ./loki.yml:/etc/loki/local-config.yaml
-        ports:
-            - "3100:3100"
-        networks:
-            - loki
-    promtail:
-        image: grafana/promtail:v0.2.0
-        volumes:
-            - /var/log/osquery:/var/log/osquery
-            - promtail:/promtail
-            - ./promtail.yml:/etc/promtail/local-config.yaml
-        command: ["-config.file=/etc/promtail/local-config.yaml"]
-        ports:
-            - "9080:9080"
-        networks:
-            - loki
-    grafana:
-        image: grafana/grafana:6.3.0-beta4
-        volumes:
-            - ./grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasources.yml
-            - ./grafana-dashboard-config.yml:/etc/grafana/provisioning/dashboards/default.yml
-            - ./grafana-dashboard-loki.json:/var/lib/grafana/dashboards/loki.json
-        ports:
-            - "3000:3000"
-        networks:
-            - loki
-    prometheus:
-        image: prom/prometheus:v2.11.1
-        volumes:
-            - ./prometheus.yml:/etc/prometheus/prometheus.yml
-        ports:
-            - "9090:9090"
-        networks:
-            - loki
+  loki:
+    image: grafana/loki:v0.3.0
+    volumes:
+      - loki:/loki
+      - ./loki.yml:/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - loki
+  promtail:
+    image: grafana/promtail:v0.3.0
+    volumes:
+      - /var/log/osquery:/var/log/osquery
+      - promtail:/promtail
+      - ./promtail.yml:/etc/promtail/local-config.yaml
+    command: ["-config.file=/etc/promtail/local-config.yaml"]
+    ports:
+      - "9080:9080"
+    networks:
+      - loki
+  grafana:
+    image: grafana/grafana:6.3.3
+    volumes:
+      - ./grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./grafana-dashboard-config.yml:/etc/grafana/provisioning/dashboards/default.yml
+      - ./grafana-dashboard-loki.json:/var/lib/grafana/dashboards/loki.json
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+  prometheus:
+    image: prom/prometheus:v2.12.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - loki
