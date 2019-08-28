@@ -179,6 +179,8 @@ If you're on AWS, you can add a query for your EC2's tags.
 
 # Osquery - Results
 
+`/var/log/osquery/osqueryd.results.log`
+
 ```json
 {
   "name": "pack_incident-response_last",
@@ -199,3 +201,62 @@ If you're on AWS, you can add a query for your EC2's tags.
   "action": "added"
 }
 ```
+
+# Osquery - Recap
+
+It's been around a while
+
+Cross-platform
+
+It's just SQL
+
+Schedule queries with "packs"
+
+# Loki
+
+Cloud-native log aggregation
+
+Made by Grafana
+
+# Loki
+
+> Prometheus but for logs.
+
+^At first, this statement confused me.
+Let's take a quick detour to Prometheus.
+
+# Prometheus
+
+Metrics collection via "pull"
+
+^TODO: diagram push vs pull
+
+# Prometheus - Data Structure
+
+Metrics have labels in addition to values.
+
+```plaintext
+rss_enjoyment{track="tech", talk="osquery_loki"} 11
+```
+
+# Loki - Data Structure
+
+Log entries have labels, too.
+
+```plaintext
+{track="tech", talk="osquery_loki"} "best talk ever"
+{track="tech", talk="osquery_loki"} "i want to know more"
+{track="tech", talk="osquery_loki"} "i hear that one guy runs rocdev"
+```
+
+# Loki - Aggregation
+
+Prometheus is a "pull" system.
+
+Loki is a "push" system.
+
+The matching labels allow us to switch back and forth freely.
+
+^This is why Loki is like Prometheus.
+We read from them the same way with the same labels.
+But there's one more link with Prometheus and Loki: metrics extraction.
