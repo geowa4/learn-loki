@@ -220,16 +220,31 @@ Made by Grafana
 
 # Loki
 
-> Prometheus but for logs.
+> Prometheus-inspired logging for cloud natives.
 
-^At first, this statement confused me.
-Let's take a quick detour to Prometheus.
+^To know what this means, let's take a quick detour to Prometheus.
 
 # Prometheus
 
 Metrics collection via "pull"
 
+Time-series data store
+
+Queryable via PromQL
+
+# Prometheus - Push vs. Pull
+
 ^TODO: diagram push vs pull
+
+# Prometheus - Scraping
+
+```yaml
+scrape_configs:
+  - job_name: "promtail"
+    static_configs:
+      - targets:
+          - promtail:9080
+```
 
 # Prometheus - Data Structure
 
@@ -249,14 +264,166 @@ Log entries have labels, too.
 {track="tech", talk="osquery_loki"} "i hear that one guy runs rocdev"
 ```
 
-# Loki - Aggregation
-
-Prometheus is a "pull" system.
-
-Loki is a "push" system.
+# Loki - Labels
 
 The matching labels allow us to switch back and forth freely.
+
+# Loki - Query
+
+LogQL
+
+```bash
+$ logcli query --tail '{name="pack_incident-response_last"}'
+2019-08-29T03:01:37Z
+{filename="/var/log/osquery/osqueryd.results.log", job="osquery_results", name="pack_incident-response_last"}
+{
+  "name":"pack_incident-response_last",
+  "hostIdentifier":"ubuntu-bionic",
+  "calendarTime":"Thu Aug 29 03:01:37 2019 UTC",
+  "unixTime":1567047697,
+  "epoch":0,
+  "counter":115,
+  "decorations":{"host_uuid":"661449FD-E11A-462B-9EA9-63A3EE8F9BDC","username":"vagrant"},
+  "columns":{"host":"10.0.2.2","pid":"7404","time":"1567047680","tty":"pts/1","type":"7","username":"vagrant"},
+  "action":"added"
+}
+```
 
 ^This is why Loki is like Prometheus.
 We read from them the same way with the same labels.
 But there's one more link with Prometheus and Loki: metrics extraction.
+
+# Loki - Collection
+
+Promtail
+
+^We've seen how Osquery generates logs.
+We've seen how to read logs.
+But how did they get there?
+
+# Promtail
+
+Forwards logs
+_and_
+Extracts metrics
+
+# Promtail - Scraping
+
+```yaml
+clients:
+  - url: http://loki:3100/api/prom/push
+scrape_configs:
+  - job_name: osquery
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: osquery_results
+          __path__: /var/log/osquery/osqueryd.results.log
+```
+
+^Anything Osquery reports will be forwarded to Loki
+
+# Promtail - Result Reminder
+
+```json
+{
+  "name": "pack_incident-response_last",
+  "hostIdentifier": "ubuntu-bionic",
+  "calendarTime": "Thu Aug 29 03:01:37 2019 UTC",
+  "unixTime": 1567047697,
+  "epoch": 0,
+  "counter": 115,
+  "decorations": {
+    "host_uuid": "661449FD-E11A-462B-9EA9-63A3EE8F9BDC",
+    "username": "vagrant"
+  },
+  "columns": {
+    "host": "10.0.2.2",
+    "pid": "7404",
+    "time": "1567047680",
+    "tty": "pts/1",
+    "type": "7",
+    "username": "vagrant"
+  },
+  "action": "added"
+}
+```
+
+# Promtail - Pipelines
+
+```yaml
+pipeline_stages:
+  - json:
+      expressions:
+        timestamp: unixTime
+        ip: columns.host
+        name: name
+        username: columns.username
+  - timestamp:
+      source: timestamp
+      format: Unix
+  - labels:
+      name: name
+```
+
+# Promtail - Metrics
+
+```yaml
+pipeline_stages:
+  - ...
+  - metrics:
+      last_logins:
+        type: Counter
+        description: count last logins
+        source: name
+        config:
+          value: pack_incident-response_last
+          action: inc
+```
+
+# Promtail - Prometheus
+
+```yaml
+scrape_configs:
+  - job_name: "promtail"
+    static_configs:
+      - targets:
+          - promtail:9080
+```
+
+# Where we are now
+
+Osquery producing results
+
+Promtail forwarding to Loki
+
+Query and tail logs in Loki
+
+Promtail extracting metrics
+
+Prometheus scraping Promtail
+
+# What's left
+
+Charting & alerting
+
+# Grafana
+
+Supports both Promtheus and Loki as data sources
+
+# Grafana - Loki
+
+![inline](media/loki.png)
+
+# Grafana - Prometheus
+
+![inline](media/prometheus.png)
+
+# Grafana - Alerting
+
+![inline](media/alert.png)
+
+# Putting it all together
+
+^TODO: diagram all the components
