@@ -3,19 +3,21 @@ slidenumbers: true
 slidecount: true
 slide-dividers: #
 
-# Automated Incident Response with Osquery and Loki
+# Endpoint Visibility with Osquery and Loki
 
 George Adams IV & Ed Welch
 
 # Use Case
 
-Detecting and alerting SSH connections.
+Detecting SSH connections and alerting.
 
 ^This is the end goal we'll build towards as we learn a little more along the way.
 
 # Follow Along
 
 [https://github.com/geowa4/learn-loki](https://github.com/geowa4/learn-loki)
+
+^Clone this repo to see slides and run these tools in a Vagrant VM.
 
 # Osquery
 
@@ -29,11 +31,17 @@ Date:   Wed Jul 30 17:35:19 2014 -0700
     Initial commit
 ```
 
+^It had existed internally for some time, but this was when they dumped everything to GitHub.
+The next couple commits were fixing repo layout issues from the migration.
+
 # Osquery
 
 ## Works on my machine
 
 ![inline fill](media/windows_logo.png)![inline fill](media/apple_logo.png)![inline fill](media/tux_logo.png)
+
+^One reason I like Osquery is that it runs everywhere.
+I can install it on my laptop and my entire fleet.
 
 # Osquery
 
@@ -52,6 +60,8 @@ CREATE TABLE processes(
 ) WITHOUT ROWID;
 ```
 
+^If we interrogate the schema for the processes table, we see a familiar sight.
+
 # Osquery
 
 ```sql
@@ -66,7 +76,7 @@ select max(disk_bytes_read), pid, name, cmdline, cwd from processes;
 +----------------------+------+------+---------+---------------+
 ```
 
-^Who remembers how the command to list what processes are listening on which ports?
+^We even get common SQL functions like max, count, etc.
 
 # Osquery
 
@@ -88,6 +98,12 @@ where p.name = 'VBoxHeadless' and l.port <> 0;
 +--------------+------+----------+
 ```
 
+^Why is a SQL interface nice?
+Who remembers how the command to list what processes are listening on which ports?
+How about cross-platform?
+Not me.
+Exploration is easier in SQL than parsing man pages.
+
 # Osquery
 
 ```sql
@@ -108,7 +124,10 @@ on c.id = p.id;
 +--------------------+------+-----------+
 ```
 
-# Osquery
+^Of course you can also query Docker resouces.
+Here we're doing the Docker container version of the process query eariler.
+
+# Osquery - last Schema
 
 ```sql
 .schema last
@@ -121,7 +140,11 @@ CREATE TABLE last(
 );
 ```
 
-# Osquery
+^Ok, so we can query things.
+We have a job to do: detect SSH connections.
+Using the `last` table we can see who's been connecting and when.
+
+# Osquery - last Query
 
 ```sql
 select * from last;
@@ -145,6 +168,8 @@ select * from last;
 +----------+-------+------+------+------------+-------------------+
 ```
 
+^What querying `last` looks like.
+
 # Osquery - Packs
 
 ```json
@@ -161,6 +186,10 @@ select * from last;
 }
 ```
 
+^Cool, but I'm not going to run that query manually on every server.
+With Osquery, you configure "packs" to do that for you.
+Here we see we're selecting all the columns from `last` every 60 seconds and only on POSIX machines.
+
 # Osquery - Decorators
 
 ```json
@@ -174,7 +203,9 @@ select * from last;
 }
 ```
 
-^Decorator results are added to pack results.
+^Ok, I know someone got in, but where was it?
+That's where decorators come in.
+The results from these queries are appended to every query result.
 If you're on AWS, you can add a query for your EC2's tags.
 
 # Osquery - Results
@@ -202,6 +233,11 @@ If you're on AWS, you can add a query for your EC2's tags.
 }
 ```
 
+^This is a sample result showing us logging in as `vagrant`.
+The result and others from queries defined in our packs can be found in that log file.
+One key to remember about the results log is that if the query returns no new data, nothing is written to the log.
+Only changes are appended.
+
 # Osquery - Recap
 
 It's been around a while
@@ -212,15 +248,13 @@ It's just SQL
 
 Schedule queries with "packs"
 
-# Loki
-
-Cloud-native log aggregation
-
-Made by Grafana
+^Next, we'll see how to aggregate those intrusions so we can alert on them.
 
 # Loki
 
 > Prometheus-inspired logging for cloud natives.
+
+Made by Grafana
 
 ^To know what this means, let's take a quick detour to Prometheus.
 
@@ -228,13 +262,19 @@ Made by Grafana
 
 Metrics collection via "pull"
 
+# Prometheus - Push
+
+^TODO: diagram push vs pull
+
+# Prometheus - Pull
+
+^TODO: diagram push vs pull
+
+# Prometheus - Time-series
+
 Time-series data store
 
 Queryable via PromQL
-
-# Prometheus - Push vs. Pull
-
-^TODO: diagram push vs pull
 
 # Prometheus - Scraping
 
@@ -246,6 +286,9 @@ scrape_configs:
           - promtail:9080
 ```
 
+^Here we're showing a simple config that tells Prometheus to scrape the metrics from a host "promtail" on port 9080.
+Prometheus will issue a GET and store the parsed metrics from the response.
+
 # Prometheus - Data Structure
 
 Metrics have labels in addition to values.
@@ -253,6 +296,11 @@ Metrics have labels in addition to values.
 ```plaintext
 rss_enjoyment{track="tech", talk="osquery_loki"} 11
 ```
+
+^What is Prometheus scraping and how do we query it?
+This is what Prometheus scrapes.
+The "rss_enjoyment" metric with labels "track" and "talk" is all the way up to 11.
+Querying is done using the same syntax, but feel free to leave off bits like the specific talk if you just want to chart the "tech" track.
 
 # Loki - Data Structure
 
@@ -264,9 +312,14 @@ Log entries have labels, too.
 {track="tech", talk="osquery_loki"} "i hear that one guy runs rocdev"
 ```
 
+^Loki uses the same structure as Prometheus in that each log entry uses labels.
+And the label queries you can do (LogQL) look just like label queries in PromQL.
+
 # Loki - Labels
 
 The matching labels allow us to switch back and forth freely.
+
+^This is a huge benefit that reduces the volume you have to learn and streamlines investigations.
 
 # Loki - Query
 
@@ -289,9 +342,8 @@ $ logcli query --tail '{name="pack_incident-response_last"}'
 }
 ```
 
-^This is why Loki is like Prometheus.
-We read from them the same way with the same labels.
-But there's one more link with Prometheus and Loki: metrics extraction.
+^Let's take a look at a LogQL query and try to find our sample result from earlier.
+This commonality in query structure is nice, but there's one more link with Prometheus and Loki: metrics extraction.
 
 # Loki - Collection
 
@@ -299,13 +351,16 @@ Promtail
 
 ^We've seen how Osquery generates logs.
 We've seen how to read logs.
-But how did they get there?
+Promtail is how those logs get from your endpoint to Loki.
 
 # Promtail
 
 Forwards logs
 _and_
 Extracts metrics
+
+^Promtail does something more than just forwarding logs from A to B.
+It reads them, parses them, and makes metrics available.
 
 # Promtail - Scraping
 
@@ -322,7 +377,8 @@ scrape_configs:
           __path__: /var/log/osquery/osqueryd.results.log
 ```
 
-^Anything Osquery reports will be forwarded to Loki
+^But let's start with how it knows how to get Osquery results to Loki.
+Basically, we make a scrape config that looks just like what we had for Prometheus.
 
 # Promtail - Result Reminder
 
@@ -340,15 +396,17 @@ scrape_configs:
   },
   "columns": {
     "host": "10.0.2.2",
-    "pid": "7404",
+    "username": "vagrant",
+    "type": "7",
     "time": "1567047680",
     "tty": "pts/1",
-    "type": "7",
-    "username": "vagrant"
+    "pid": "7404"
   },
   "action": "added"
 }
 ```
+
+^Let's just remind ourselves what the Osquery result looked like before we start processing it with Promtail.
 
 # Promtail - Pipelines
 
@@ -357,7 +415,6 @@ pipeline_stages:
   - json:
       expressions:
         timestamp: unixTime
-        ip: columns.host
         name: name
         username: columns.username
   - timestamp:
@@ -366,6 +423,11 @@ pipeline_stages:
   - labels:
       name: name
 ```
+
+^Once we read the log line, we want to pull some things out of it.
+First, it's JSON; always use structured logs since it makes automation so much easier and readability doesn't really suffer.
+Then we want to convert the `unixTime` field to `timestamp` and tell Promtail that is Unix format so Loki shows the right time for the event.
+Finally, we take the `name` of the pack query and add it to our labels for searching.
 
 # Promtail - Metrics
 
@@ -382,6 +444,8 @@ pipeline_stages:
           action: inc
 ```
 
+^And this gets us our metric counting how many times `last` finds a new event.
+
 # Promtail - Prometheus
 
 ```yaml
@@ -391,6 +455,9 @@ scrape_configs:
       - targets:
           - promtail:9080
 ```
+
+^Now this is where our Prometheus config from earlier comes in.
+We can use Prometheus to scrap Promtail to record that counter.
 
 # Where we are now
 
@@ -404,6 +471,8 @@ Promtail extracting metrics
 
 Prometheus scraping Promtail
 
+^We've covered a lot of ground so let's quickly recap what we've accomplished so far.
+
 # What's left
 
 Charting & alerting
@@ -412,17 +481,28 @@ Charting & alerting
 
 Supports both Promtheus and Loki as data sources
 
+^Charting and alerting are things Grafana does well.
+If you're a Prometheus shop, you might have Alertmanager running, and that will work, too.
+
 # Grafana - Loki
 
 ![inline](media/loki.png)
+
+^Explore Loki in Grafana to find our event.
 
 # Grafana - Prometheus
 
 ![inline](media/prometheus.png)
 
+^Use the same labels to search Prometheus.
+
 # Grafana - Alerting
 
+`increase(promtail_custom_last_logins{name="pack_incident-response_last"}[5m])`
+
 ![inline](media/alert.png)
+
+^Make a simple chart on a dashboard and alert if the number of `last` logins increases.
 
 # Putting it all together
 
