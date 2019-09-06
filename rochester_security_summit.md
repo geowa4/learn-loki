@@ -274,8 +274,9 @@ Time-series metric collection, storage and querying.
 
 Queryable via PromQL
 
-> sum by (instance) rate(http_requests_total{cluster="us-central1",app="loki"}[5m])
-> 
+```plaintext
+sum by (instance) rate(http_requests_total{cluster="us-central1",app="loki"}[5m])
+```
 
 ^Get the http requests per second for the loki app in the us-central1 datacenter, grouped by `instance`  TODO: Need a more security related query example, count of logins perhaps.
 
