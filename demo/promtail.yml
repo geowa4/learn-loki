@@ -23,7 +23,6 @@ scrape_configs:
                     timestamp: unixTime
                     ip: columns.host
                     name: name
-                    username: columns.username
           - timestamp:
                 source: timestamp
                 format: Unix

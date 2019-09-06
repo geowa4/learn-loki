@@ -252,15 +252,15 @@ Schedule queries with "packs"
 
 # Loki
 
-> Prometheus-inspired logging for cloud natives.
+> like Prometheus, but for logs.*
 
 Made by Grafana
 
-^To know what this means, let's take a quick detour to Prometheus.
+^High performance cost effective logging inspired by Prometheus and sharing a similar query language *but uses push instead of pull
 
 # Prometheus
 
-Metrics collection via "pull"
+Time-series metric collection, storage and querying.
 
 # Prometheus - Push
 
@@ -272,9 +272,12 @@ Metrics collection via "pull"
 
 # Prometheus - Time-series
 
-Time-series data store
-
 Queryable via PromQL
+
+> sum by (instance) rate(http_requests_total{cluster="us-central1",app="loki"}[5m])
+> 
+
+^Get the http requests per second for the loki app in the us-central1 datacenter, grouped by `instance`  TODO: Need a more security related query example, count of logins perhaps.
 
 # Prometheus - Scraping
 
@@ -286,7 +289,7 @@ scrape_configs:
           - promtail:9080
 ```
 
-^Here we're showing a simple config that tells Prometheus to scrape the metrics from a host "promtail" on port 9080.
+^Variety of support for service discovery (DNS, Kubernetes) or static config.  Here we're showing a simple config that tells Prometheus to scrape the metrics from a host "promtail" on port 9080.
 Prometheus will issue a GET and store the parsed metrics from the response.
 
 # Prometheus - Data Structure
@@ -294,13 +297,12 @@ Prometheus will issue a GET and store the parsed metrics from the response.
 Metrics have labels in addition to values.
 
 ```plaintext
-rss_enjoyment{track="tech", talk="osquery_loki"} 11
+rss_attendance_total{track="tech", talk="osquery_loki"} 30
+sum(rss_attendance_total{track="tech"}) 100
 ```
 
-^What is Prometheus scraping and how do we query it?
-This is what Prometheus scrapes.
-The "rss_enjoyment" metric with labels "track" and "talk" is all the way up to 11.
-Querying is done using the same syntax, but feel free to leave off bits like the specific talk if you just want to chart the "tech" track.
+^Labels add dimensions to a metric
+The "rss_enjoyment_total" counter can be dimensioned with labels "track" and "talk" for querying the attendance of specific talks, use sum() to aggregate series with different label values.
 
 # Loki - Data Structure
 
@@ -313,13 +315,15 @@ Log entries have labels, too.
 ```
 
 ^Loki uses the same structure as Prometheus in that each log entry uses labels.
-And the label queries you can do (LogQL) look just like label queries in PromQL.
+And the label queries you can do (LogQL) look just like label queries in PromQL. 
+
+^Labels are how data is how logs are indexed in Loki.  Every unique combination of key=value label pairs identify a log stream.  Log streams are aggregated and stored in their own files called chunks.  Using label selectors on queries allows Loki to selectively load chunks for queries.
 
 # Loki - Labels
 
 The matching labels allow us to switch back and forth freely.
 
-^This is a huge benefit that reduces the volume you have to learn and streamlines investigations.
+^This is a huge benefit that reduces the volume you have to learn and streamlines investigations. 
 
 # Loki - Query
 
@@ -377,8 +381,7 @@ scrape_configs:
           __path__: /var/log/osquery/osqueryd.results.log
 ```
 
-^But let's start with how it knows how to get Osquery results to Loki.
-Basically, we make a scrape config that looks just like what we had for Prometheus.
+^Promtail uses the same service discovery code as prometheus, allowing us to configure a nearly identical scrape config.
 
 # Promtail - Result Reminder
 
@@ -416,7 +419,6 @@ pipeline_stages:
       expressions:
         timestamp: unixTime
         name: name
-        username: columns.username
   - timestamp:
       source: timestamp
       format: Unix
@@ -425,9 +427,9 @@ pipeline_stages:
 ```
 
 ^Once we read the log line, we want to pull some things out of it.
-First, it's JSON; always use structured logs since it makes automation so much easier and readability doesn't really suffer.
-Then we want to convert the `unixTime` field to `timestamp` and tell Promtail that is Unix format so Loki shows the right time for the event.
-Finally, we take the `name` of the pack query and add it to our labels for searching.
+First, it's JSON; promtail can also parse with regex, though JSON is much easier.  We define a few fields we are interested in from the JSON
+We want to convert the `unixTime` field to `timestamp` and tell Promtail that is Unix format so Loki shows the right time for the event.
+Finally, we take the `name` of the pack query and add it as a label.
 
 # Promtail - Metrics
 
@@ -488,7 +490,7 @@ If you're a Prometheus shop, you might have Alertmanager running, and that will 
 
 ![inline](media/loki.png)
 
-^Explore Loki in Grafana to find our event.
+^Explore Loki in Grafana to find our event. (Improved support for JSON log entries coming soon)
 
 # Grafana - Prometheus
 
