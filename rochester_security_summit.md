@@ -252,7 +252,7 @@ Schedule queries with "packs"
 
 # Loki
 
-> like Prometheus, but for logs.*
+> Prometheus-inspired logging for cloud natives.
 
 Made by Grafana
 
