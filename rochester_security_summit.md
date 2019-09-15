@@ -3,7 +3,13 @@ slidenumbers: true
 slidecount: true
 slide-dividers: #
 
-# Endpoint Visibility with Osquery and Loki
+# _Endpoint Visibility_
+
+## with
+
+## **Osquery and Loki**
+
+# Who We Are
 
 George Adams IV & Ed Welch
 
@@ -512,3 +518,9 @@ If you're a Prometheus shop, you might have Alertmanager running, and that will 
 # Putting it all together
 
 ![inline](media/component_diagram.png)
+
+# Links & Things
+
+- [Osquery](https://osquery.io/)
+- [Loki](https://grafana.com/oss/loki)
+- [Prometheus](https://prometheus.io/)
