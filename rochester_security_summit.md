@@ -355,24 +355,30 @@ Log entries have labels, too.
 
 Label matching (reduces chunks loaded for queries):
 
-- `{name=~"mysql.+"}`
-- `{name!~"mysql.+"}`
+```plaintext
+{name=~"mysql.+"}
+{name!~"mysql.+"}
+```
 
 # Loki - Filtering
 
 ## `grep` and `grep -v`
 
-- `{job="mysql"} |= "error"`
-- `{name="kafka"} |~ "tsdb-ops.*io:2003"`
-- `{instance=~"kafka-[23]",name="kafka"} != kafka.server:type=ReplicaManager`
-- `{job="mysql"} |= "error" != "timeout"`
+```plaintext
+{job="mysql"} |= "error"
+{name="kafka"} |~ "tsdb-ops.*io:2003"
+{instance=~"kafka-[23]",name="kafka"} != kafka.server:type=ReplicaManager
+{job="mysql"} |= "error" != "timeout"
+```
 
 # Loki - Aggregations
 
 ## PromQL style aggregations (`wc -l`) or more complicated things like rate
 
-- `count_over_time({job="mysql"}[5m])`
-- `rate(( {job="mysql"} |= "error" != "timeout)[10s] ))`
+```plaintext
+count_over_time({job="mysql"}[5m])
+rate(( {job="mysql"} |= "error" != "timeout)[10s] ))
+```
 
 # Loki - One More Note On Labels
 
