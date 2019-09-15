@@ -263,7 +263,7 @@ Schedule queries with "packs"
 Made by Grafana
 
 ^Ed introduces himself and that he works on open source licensed Loki.
-  
+
 # Loki
 
 ![inline](media/loki_arch.png)
@@ -272,7 +272,7 @@ Made by Grafana
 
 # Prometheus
 
-First a little background on Prometheus: 
+First a little background on Prometheus:
 
 A Time-series metric collection, storage and querying application.
 
@@ -358,14 +358,18 @@ Label matching (reduces chunks loaded for queries):
 - `{name=~"mysql.+"}`
 - `{name!~"mysql.+"}`
 
-Filtering (`grep` and `grep -v`):
+# Loki - Filtering
+
+## `grep` and `grep -v`
 
 - `{job="mysql"} |= "error"`
 - `{name="kafka"} |~ "tsdb-ops.*io:2003"`
 - `{instance=~"kafka-[23]",name="kafka"} != kafka.server:type=ReplicaManager`
 - `{job="mysql"} |= "error" != "timeout"`
 
-PromQL style aggregations (`wc -l`) or more complicated things like rate: 
+# Loki - Aggregations
+
+## PromQL style aggregations (`wc -l`) or more complicated things like rate
 
 - `count_over_time({job="mysql"}[5m])`
 - `rate(( {job="mysql"} |= "error" != "timeout)[10s] ))`
