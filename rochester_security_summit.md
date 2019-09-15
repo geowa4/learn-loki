@@ -262,11 +262,19 @@ Schedule queries with "packs"
 
 Made by Grafana
 
-^High performance cost effective logging inspired by Prometheus and sharing a similar query language \*but uses push instead of pull
+^Ed introduces himself and that he works on open source licensed Loki.
+  
+# Loki
+
+![inline](media/loki_arch.png)
+
+^ Loki is built to be run as a single process with either local or cloud storage, or can be deployed as microservices and scaled horizontally for any size workload, supporting separate scaling for read and write paths.
 
 # Prometheus
 
-Time-series metric collection, storage and querying.
+First a little background on Prometheus: 
+
+A Time-series metric collection, storage and querying application.
 
 # Prometheus - Push
 
@@ -274,9 +282,13 @@ Time-series metric collection, storage and querying.
 
 ![inline](media/statsd_push.png)
 
+^ Working a little different from a lot of metric systems which push data to a central location
+
 # Prometheus - Pull
 
 ![inline](media/prometheus_pull.png)
+
+^ Prometheus scrapes an http endpoint gathering metrics at a fixed scrape_interval
 
 # Prometheus - Time-series
 
@@ -284,9 +296,12 @@ Queryable via PromQL
 
 ```plaintext
 sum by (instance) rate(http_requests_total{cluster="us-central1",app="loki"}[5m])
+increase(promtail_custom_last_logins{name="pack_incident-response_last"}[5m])
 ```
 
-^Get the http requests per second for the loki app in the us-central1 datacenter, grouped by `instance` TODO: Need a more security related query example, count of logins perhaps.
+^Get the http requests per second for the loki app in the us-central1 datacenter, grouped by `instance`
+
+^Show the increase of logins over the last 5 mins
 
 # Prometheus - Scraping
 
@@ -298,8 +313,7 @@ scrape_configs:
           - promtail:9080
 ```
 
-^Variety of support for service discovery (DNS, Kubernetes) or static config. Here we're showing a simple config that tells Prometheus to scrape the metrics from a host "promtail" on port 9080.
-Prometheus will issue a GET and store the parsed metrics from the response.
+^Staic scrape configs or many types of service discovery for Kubernetes, AWS, Azure, DNS et.
 
 # Prometheus - Data Structure
 
@@ -323,40 +337,44 @@ Log entries have labels, too.
 {track="tech", talk="osquery_loki"} "i hear that one guy runs rocdev"
 ```
 
-^Loki uses the same structure as Prometheus in that each log entry uses labels.
-And the label queries you can do (LogQL) look just like label queries in PromQL.
+^ Loki takes its inspiration from prometheus in how data is indexed using labels.
 
-^Labels are how data is how logs are indexed in Loki. Every unique combination of key=value label pairs identify a log stream. Log streams are aggregated and stored in their own files called chunks. Using label selectors on queries allows Loki to selectively load chunks for queries.
+# Loki - Storage
 
-# Loki - Labels
+![inline](media/loki_storage.png)
 
-The matching labels allow us to switch back and forth freely.
+^ Label selectors on queries allows Loki to selectively load chunks for queries.
 
-^This is a huge benefit that reduces the volume you have to learn and streamlines investigations.
+^ Cost effectiveness is achieved by having a small index and storing compressed chunks, this is a design tradeoff vs systems like elasticsearch and splunk who have large inverted indices.
+
+^ Label cardinality should be kept low to prevent too many chunks and too large an index, instead we use querying
 
 # Loki - Query
 
-LogQL
+## LogQL
 
-```bash
-$ logcli query --tail '{name="pack_incident-response_last"}'
-2019-08-29T03:01:37Z
-{filename="/var/log/osquery/osqueryd.results.log", job="osquery_results", name="pack_incident-response_last"}
-{
-  "name":"pack_incident-response_last",
-  "hostIdentifier":"ubuntu-bionic",
-  "calendarTime":"Thu Aug 29 03:01:37 2019 UTC",
-  "unixTime":1567047697,
-  "epoch":0,
-  "counter":115,
-  "decorations":{"host_uuid":"661449FD-E11A-462B-9EA9-63A3EE8F9BDC","username":"vagrant"},
-  "columns":{"host":"10.0.2.2","pid":"7404","time":"1567047680","tty":"pts/1","type":"7","username":"vagrant"},
-  "action":"added"
-}
-```
+Label matching (reduces chunks loaded for queries):
 
-^Let's take a look at a LogQL query and try to find our sample result from earlier.
-This commonality in query structure is nice, but there's one more link with Prometheus and Loki: metrics extraction.
+- `{name=~"mysql.+"}`
+- `{name!~"mysql.+"}`
+
+Filtering (`grep` and `grep -v`):
+
+- `{job="mysql"} |= "error"`
+- `{name="kafka"} |~ "tsdb-ops.*io:2003"`
+- `{instance=~"kafka-[23]",name="kafka"} != kafka.server:type=ReplicaManager`
+- `{job="mysql"} |= "error" != "timeout"`
+
+PromQL style aggregations (`wc -l`) or more complicated things like rate: 
+
+- `count_over_time({job="mysql"}[5m])`
+- `rate(( {job="mysql"} |= "error" != "timeout)[10s] ))`
+
+# Loki - One More Note On Labels
+
+Consistent labeling between metrics in prometheus and logs in Loki allow switching back and forth between metrics and logs freely.
+
+^A typical workflow would be using metrics and alerts on metrics to narrow down a timeframe and important labels, then pivoting to logs.
 
 # Loki - Collection
 
